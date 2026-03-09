@@ -95,9 +95,6 @@ Among the evaluated architectures, Bidirectional LSTM achieves the best performa
 
 ---
 
-
----
-
 ## Author
 
 Keerthija Bontu  
