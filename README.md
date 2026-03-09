@@ -17,10 +17,13 @@ The models are trained on the Airline Passengers dataset to learn temporal patte
 Airline Passengers Dataset
 
 - Monthly international airline passenger totals
-- Time period: 1949–1960
+- Time period: 1949 – 1960
 - Total observations: 144
 
 This dataset is commonly used as a benchmark for time series forecasting.
+
+Dataset source:
+https://www.kaggle.com/datasets/rakannimer/air-passengers
 
 ---
 
@@ -35,7 +38,7 @@ Each model predicts the next value of the time series.
 
 ---
 
-## Model Architectures
+## Models
 
 Three recurrent neural network architectures were evaluated:
 
@@ -43,55 +46,41 @@ Three recurrent neural network architectures were evaluated:
 - GRU
 - Bidirectional LSTM
 
-All models were trained under the same configuration to ensure fair comparison.
+All models were trained using the same configuration to ensure a fair comparison.
 
 Training setup:
 
 - Hidden size: 64
-- Recurrent layers: 1
 - Optimizer: Adam
 - Learning rate: 1e-3
 - Batch size: 16
 - Maximum epochs: 300
-- Early stopping with patience of 30 epochs
+- Early stopping based on validation loss
 
 ---
 
 ## Experiment
 
-Two forecasting strategies were compared:
+Two forecasting approaches were compared:
 
-### 1. Direct Forecasting
+### Direct Forecasting
 The model predicts the next value of the time series.
 
-### 2. Differencing
-The model predicts the change between consecutive observations.
+### Differencing
+The model predicts the change between consecutive observations, which is then used to reconstruct the forecast.
 
-The predicted change is added to the last observed value to reconstruct the forecast.
+This experiment shows how **data representation affects forecasting accuracy**.
 
 ---
 
 ## Results
 
-### Without Differencing
+The models were evaluated using:
 
-| Model | MAE | RMSE |
-|------|------|------|
-| LSTM | 82.61 | 91.36 |
-| GRU | 79.30 | 90.71 |
-| BiLSTM | **66.37** | **77.76** |
+- Mean Absolute Error (MAE)
+- Root Mean Squared Error (RMSE)
 
-### With Differencing
-
-| Model | MAE | RMSE |
-|------|------|------|
-| LSTM | 37.72 | 47.35 |
-| GRU | 31.42 | 41.04 |
-| BiLSTM | **28.34** | **34.93** |
-
-Differencing significantly improves forecasting accuracy for all models.
-
-Among the evaluated architectures, Bidirectional LSTM achieves the best performance.
+The Bidirectional LSTM achieved the best performance among the evaluated architectures, and differencing significantly improved forecasting accuracy.
 
 ---
 
