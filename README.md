@@ -87,6 +87,7 @@ The Bidirectional LSTM achieved the best performance among the evaluated archite
 ## Forecasting Results
 
 ![Forecast Results](bilstm_forecast.png)
+
 ---
 
 ## Author
