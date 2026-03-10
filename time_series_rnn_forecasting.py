@@ -8,13 +8,11 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 import matplotlib.pyplot as plt
 
-# ============================
 # FINAL SETTINGS 
-# ============================
 CSV_FILENAME = "airline-passengers.csv"
 
 WINDOW_LEN = 24          # L (past observations used as input)
-SHOW_PLOTS = True        # show live plots (no saving)
+SHOW_PLOTS = True        # show live plots
 
 # Training hyperparameters (same across all models for fair comparison)
 BATCH_SIZE = 16
@@ -28,9 +26,7 @@ PATIENCE = 30
 SEED = 42
 
 
-# ============================
 # Reproducibility 
-# ============================
 def set_seeds(seed: int):
     random.seed(seed)
     np.random.seed(seed)
@@ -44,9 +40,7 @@ def set_seeds(seed: int):
     torch.backends.cudnn.benchmark = False
 
 
-# ============================
 # 1) Load dataset from CSV
-# ============================
 def load_airpassengers_csv(path=CSV_FILENAME):
     months = []
     values = []
@@ -59,9 +53,7 @@ def load_airpassengers_csv(path=CSV_FILENAME):
     return months, np.array(values, dtype=np.float32)
 
 
-# ============================
 # 2) Scaling 
-# ============================
 class StandardScaler:
     def __init__(self):
         self.mean_ = 0.0
@@ -79,17 +71,7 @@ class StandardScaler:
         return x * self.std_ + self.mean_
 
 
-# ============================
 # 3) Dataset: Level vs Differenced target
-#    X: last L scaled LEVELS
-#    y:
-#      - no diff: next LEVEL (scaled)
-#      - diff: next DELTA (scaled), then reconstruct level at eval time
-#
-# NOTE (important clarification):
-# Differencing is computed in standardized space (on scaled values).
-# This is mathematically valid; evaluation is still done in original units.
-# ============================
 class WindowedLevelOrDelta(Dataset):
     def __init__(self, series_scaled: np.ndarray, window_len: int, use_diff: bool):
         self.s = series_scaled.astype(np.float32)
@@ -131,9 +113,7 @@ class WindowedLevelOrDelta(Dataset):
         )
 
 
-# ============================
 # 4) Models: LSTM / GRU / BiLSTM
-# ============================
 class RNNForecaster(nn.Module):
     def __init__(self, rnn_type: str, hidden_size: int, num_layers: int,
                  bidirectional: bool, dropout: float = 0.0):
@@ -174,9 +154,7 @@ class RNNForecaster(nn.Module):
         return self.head(last)     # (B, 1)
 
 
-# ============================
 # 5) Metrics
-# ============================
 def mae(y_true, y_pred):
     return float(np.mean(np.abs(y_true - y_pred)))
 
@@ -184,9 +162,7 @@ def rmse(y_true, y_pred):
     return float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
 
 
-# ============================
 # 6) Training with early stopping
-# ============================
 def train_one_model(model, train_loader, val_loader, device):
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     criterion = nn.MSELoss()
@@ -265,9 +241,7 @@ def predict_levels(model, loader, device, use_diff: bool):
     return y_true_level, y_pred_level
 
 
-# ============================
-# 7) One condition runner (use_diff False/True)
-# ============================
+# 7) One condition runner
 def run_condition(series_raw: np.ndarray, device, use_diff: bool):
     # chronological split
     T = len(series_raw)
@@ -347,9 +321,7 @@ def print_table(title, rows):
         print(f"{name:<10} | {val_mse:<12.6f} | {t_mae:<8.3f} | {t_rmse:<9.3f} | {t_sec:<8.2f}")
 
 
-# ============================
 # 8) Main
-# ============================
 def main():
     set_seeds(SEED)
 
