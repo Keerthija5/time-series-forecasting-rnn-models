@@ -1,0 +1,11 @@
+condition,model,best_val_mse,test_mae,test_rmse,test_mape_percent,training_time_sec
+Baseline,Naive,,46.364,53.725,10.08,0.0
+Baseline,MovingAvg-12,,57.621,76.996,11.57,0.0
+Baseline,SeasonalNaive-12,,49.909,51.783,10.91,0.0
+Baseline,LinearTrend,,60.163,84.917,11.68,0.0
+RNN - no differencing,LSTM,0.121281,82.611,91.364,17.32,3.08
+RNN - no differencing,GRU,0.209551,79.301,90.717,16.58,1.5
+RNN - no differencing,BiLSTM,0.130167,66.373,77.76,13.56,3.87
+RNN - differencing,LSTM,0.106299,37.721,47.355,8.08,1.49
+RNN - differencing,GRU,0.058872,31.416,41.037,6.64,2.36
+RNN - differencing,BiLSTM,0.08447,28.339,34.931,6.12,2.32
