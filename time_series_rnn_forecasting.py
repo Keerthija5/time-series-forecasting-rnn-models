@@ -1,12 +1,23 @@
 import csv
+import json
 import os
 import time
 import copy
 import random
+
+LOCAL_CACHE_DIR = os.path.join(os.getcwd(), ".cache")
+os.environ.setdefault("MPLCONFIGDIR", os.path.join(LOCAL_CACHE_DIR, "matplotlib"))
+os.environ.setdefault("XDG_CACHE_HOME", LOCAL_CACHE_DIR)
+os.makedirs(os.environ["MPLCONFIGDIR"], exist_ok=True)
+os.makedirs(os.environ["XDG_CACHE_HOME"], exist_ok=True)
+
 import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 # ============================
@@ -258,6 +269,28 @@ def run_baseline_models(series_raw: np.ndarray):
     return rows, plots
 
 
+def build_data_quality_report(months, series_raw):
+    train_end, val_end = chronological_split_points(len(series_raw))
+    duplicate_months = len(months) - len(set(months))
+    missing_values = int(np.isnan(series_raw).sum())
+
+    return {
+        "dataset": CSV_FILENAME,
+        "total_observations": len(series_raw),
+        "start_month": months[0],
+        "end_month": months[-1],
+        "missing_values": missing_values,
+        "duplicate_months": duplicate_months,
+        "train_points": train_end,
+        "validation_points": val_end - train_end,
+        "test_points": len(series_raw) - val_end,
+        "window_length": WINDOW_LEN,
+        "train_windows": max(train_end - WINDOW_LEN, 0),
+        "validation_windows": val_end - train_end,
+        "test_windows": len(series_raw) - val_end,
+    }
+
+
 # ============================
 # 6) Training with early stopping
 # ============================
@@ -441,7 +474,7 @@ def build_result_records(condition: str, rows, plots):
     return records
 
 
-def save_project_outputs(months, result_records):
+def save_project_outputs(months, series_raw, result_records):
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
     metrics_rows = []
@@ -525,12 +558,57 @@ def save_project_outputs(months, result_records):
     fig.savefig(plot_path, dpi=160)
     plt.close(fig)
 
+    data_quality = build_data_quality_report(months, series_raw)
+    data_quality_path = os.path.join(OUTPUT_DIR, "data_quality_report.csv")
+    with open(data_quality_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(data_quality.keys()))
+        writer.writeheader()
+        writer.writerow(data_quality)
+
+    ranked_records = sorted(result_records, key=lambda item: item["test_rmse"])
+    next_best = ranked_records[1]
+    rmse_improvement = next_best["test_rmse"] - best["test_rmse"]
+    rmse_improvement_percent = (rmse_improvement / next_best["test_rmse"]) * 100
+
+    run_summary = {
+        "dataset": CSV_FILENAME,
+        "total_observations": len(months),
+        "forecast_horizon": "1-step ahead",
+        "window_length": WINDOW_LEN,
+        "models_compared": len(result_records),
+        "conditions_compared": sorted(set(record["condition"] for record in result_records)),
+        "best_model": best["model"],
+        "best_condition": best["condition"],
+        "best_mae": best["test_mae"],
+        "best_rmse": best["test_rmse"],
+        "best_mape_percent": best["test_mape_percent"],
+        "next_best_model": next_best["model"],
+        "next_best_condition": next_best["condition"],
+        "next_best_rmse": next_best["test_rmse"],
+        "rmse_improvement_vs_next_best": round(float(rmse_improvement), 3),
+        "rmse_improvement_percent_vs_next_best": round(float(rmse_improvement_percent), 2),
+        "high_error_periods_flagged": int(np.sum(anomaly_flags)),
+        "review_threshold": round(threshold, 3),
+        "seed": SEED,
+        "device_note": "Uses CUDA if available, otherwise CPU",
+    }
+    run_summary_path = os.path.join(OUTPUT_DIR, "run_summary.json")
+    with open(run_summary_path, "w") as f:
+        json.dump(run_summary, f, indent=2)
+
     return {
         "best_model": best["model"],
         "best_condition": best["condition"],
         "best_rmse": best["test_rmse"],
         "anomaly_count": int(np.sum(anomaly_flags)),
-        "files": [metrics_path, forecast_path, anomaly_path, plot_path],
+        "files": [
+            metrics_path,
+            forecast_path,
+            anomaly_path,
+            plot_path,
+            data_quality_path,
+            run_summary_path,
+        ],
     }
 
 
@@ -567,7 +645,7 @@ def main():
     result_records.extend(build_result_records("RNN - differencing", rows_b, plots_b))
 
     if SAVE_OUTPUTS:
-        summary = save_project_outputs(_months, result_records)
+        summary = save_project_outputs(_months, series, result_records)
         print("\nSaved project outputs:")
         for file_path in summary["files"]:
             print(f"  - {file_path}")

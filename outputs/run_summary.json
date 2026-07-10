@@ -1,0 +1,26 @@
+{
+  "dataset": "airline-passengers.csv",
+  "total_observations": 144,
+  "forecast_horizon": "1-step ahead",
+  "window_length": 24,
+  "models_compared": 10,
+  "conditions_compared": [
+    "Baseline",
+    "RNN - differencing",
+    "RNN - no differencing"
+  ],
+  "best_model": "BiLSTM",
+  "best_condition": "RNN - differencing",
+  "best_mae": 28.339,
+  "best_rmse": 34.931,
+  "best_mape_percent": 6.12,
+  "next_best_model": "GRU",
+  "next_best_condition": "RNN - differencing",
+  "next_best_rmse": 41.037,
+  "rmse_improvement_vs_next_best": 6.106,
+  "rmse_improvement_percent_vs_next_best": 14.88,
+  "high_error_periods_flagged": 2,
+  "review_threshold": 58.973,
+  "seed": 42,
+  "device_note": "Uses CUDA if available, otherwise CPU"
+}

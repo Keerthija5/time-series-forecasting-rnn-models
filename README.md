@@ -6,6 +6,8 @@ After that, I extended it into a more practical forecasting pipeline. I added ba
 
 The dataset used here is the Airline Passengers dataset. Even though it is a public benchmark dataset, I treated it like a monthly demand signal. The same workflow could be reused for production demand, sensor trends, quality issue counts, or other industrial time-series data.
 
+The main idea is simple: a forecast should not stop at one final metric. It should also show where the model was wrong, which periods need review, and whether the model is actually better than simple baselines.
+
 ## What This Project Does
 
 - Loads a monthly time-series dataset from CSV.
@@ -16,6 +18,9 @@ The dataset used here is the Airline Passengers dataset. Even though it is a pub
 - Uses MAE, RMSE, and MAPE for evaluation.
 - Saves clean output files for review and reporting.
 - Flags high forecast-error periods for further analysis.
+- Produces a small monitoring-style report that can be checked after each run.
+- Saves a run summary with dataset size, split sizes, best model, next-best comparison, and review threshold.
+- Saves a data-quality report so the experiment is not dependent on hidden assumptions.
 
 ## Why I Added Baselines
 
@@ -53,7 +58,22 @@ In my final run, the model achieved:
 - RMSE: 34.931
 - MAPE: 6.12%
 
+The same run compared 10 forecasting configurations in total: 4 baselines, 3 RNN models without differencing, and 3 RNN models with differencing. The next-best model was GRU with differencing, with RMSE 41.037. The BiLSTM with differencing improved RMSE by 6.106, which is about 14.88% better than the next-best result in this run.
+
 The experiment also showed that differencing improved the RNN models clearly. Without differencing, the RNN models struggled more with the trend and seasonal pattern.
+
+In this final run, the high-error review flagged 2 months where the forecast error crossed the review threshold. I added this because in practical forecasting, the question is not only "which model is best?", but also "where should a person look more carefully?"
+
+## Data and Split Check
+
+The script also saves a small data-quality report before interpreting the model outputs. In the current dataset:
+
+- Total observations: 144 monthly values
+- Time range: 1949-01 to 1960-12
+- Missing values: 0
+- Duplicate months: 0
+- Train / validation / test points: 100 / 22 / 22
+- Sliding-window length: 24 months
 
 ## Forecast Output
 
@@ -73,7 +93,7 @@ The experiment also showed that differencing improved the RNN models clearly. Wi
 
 ## Saved Outputs
 
-Each run saves the same output files into the `outputs/` folder, so the project stays clean and does not create random extra files.
+Each run saves the same output files into the `outputs/` folder, so the project stays clean and does not create random extra files. I kept the output names stable because it makes the workflow easier to rerun, compare, and document.
 
 ```text
 outputs/
@@ -81,6 +101,8 @@ outputs/
   forecast_comparison.csv
   anomaly_review.csv
   forecast_plot.png
+  data_quality_report.csv
+  run_summary.json
 ```
 
 The output files help show:
@@ -89,6 +111,10 @@ The output files help show:
 - actual vs predicted values
 - forecast errors
 - high-error periods that need review
+- data quality and split information
+- best-model and next-best-model comparison
+
+This is also the part that makes the project more than a notebook-style experiment. The script creates reusable artifacts that can be inspected later or used in a report.
 
 ## How To Run
 
@@ -105,6 +131,7 @@ The script prints the model comparison tables in the terminal and saves the fina
 - MAE and RMSE are useful, but MAPE makes the error easier to understand in percentage terms.
 - A forecast is more useful when the error is monitored, not only when one final score is reported.
 - Saving outputs makes the experiment easier to review and reproduce.
+- A more complex model is not automatically better unless it beats simple baselines and gives useful error diagnostics.
 
 ## Current Limitations
 
@@ -112,6 +139,7 @@ The script prints the model comparison tables in the terminal and saves the fina
 - The project uses one-step-ahead forecasting.
 - It does not yet include external features such as holidays, events, or economic indicators.
 - The high-error review is based on forecast error thresholds, not a separate anomaly detection model.
+- The current run uses one public benchmark dataset, so it is best treated as a reusable workflow pattern rather than a final business model.
 
 ## Future Improvements
 
@@ -120,6 +148,7 @@ The script prints the model comparison tables in the terminal and saves the fina
 - Add external features for better demand prediction.
 - Compare with statistical models such as ARIMA or Exponential Smoothing.
 - Add a separate anomaly detection method for forecast residuals.
+- Add a lightweight experiment log so model settings and results can be compared across runs.
 
 ## Resume Summary
 
