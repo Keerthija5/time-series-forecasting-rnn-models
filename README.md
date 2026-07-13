@@ -6,6 +6,8 @@ After that, I extended it into a more practical forecasting pipeline. I added ba
 
 The dataset used here is the Airline Passengers dataset. Even though it is a public benchmark dataset, I treated it like a monthly demand signal. The same workflow could be reused for production demand, sensor trends, quality issue counts, or other industrial time-series data.
 
+I also added an optional PySpark preprocessing step. The dataset itself is small, so Spark is not technically needed for this file. I added it because I wanted to practise the kind of raw-to-clean data preparation that would be needed if the same forecasting workflow was used on larger demand, machine, or sensor datasets.
+
 The main idea is simple: a forecast should not stop at one final metric. It should also show where the model was wrong, which periods need review, and whether the model is actually better than simple baselines.
 
 ## What This Project Does
@@ -21,6 +23,7 @@ The main idea is simple: a forecast should not stop at one final metric. It shou
 - Produces a small monitoring-style report that can be checked after each run.
 - Saves a run summary with dataset size, split sizes, best model, next-best comparison, and review threshold.
 - Saves a data-quality report so the experiment is not dependent on hidden assumptions.
+- Includes an optional PySpark preprocessing script for schema checks, duplicate checks, lag features, rolling features, target creation, and chronological split labeling.
 
 ## Why I Added Baselines
 
@@ -75,6 +78,49 @@ The script also saves a small data-quality report before interpreting the model 
 - Train / validation / test points: 100 / 22 / 22
 - Sliding-window length: 24 months
 
+## Optional PySpark Preprocessing
+
+The main forecasting script can run directly from `airline-passengers.csv`. I kept it that way because the dataset is small and easy to inspect.
+
+The optional Spark script is a separate preprocessing stage:
+
+```text
+raw monthly CSV
+      |
+Spark schema and quality checks
+      |
+lag and rolling-window feature creation
+      |
+chronological split labeling
+      |
+processed feature file + preprocessing report
+      |
+PyTorch forecasting script
+```
+
+This is the part I added to practise a more realistic data-engineering workflow. In a real demand or sensor forecasting problem, the raw data may contain missing dates, duplicates, invalid values, or many machine/product groups. Spark is useful there because the data preparation step can be separated from the model-training step.
+
+Install the optional Spark dependency:
+
+```bash
+pip install -r requirements-spark.txt
+```
+
+Run the Spark preprocessing step:
+
+```bash
+python3 spark_preprocess_timeseries.py
+```
+
+It creates:
+
+```text
+data/processed/monthly_demand_features.csv
+outputs/spark_preprocessing_report.json
+```
+
+The generated feature file includes previous-month lags, seasonal lag, rolling means, next-month target, and split labels. I kept this as a preprocessing artifact rather than feeding it directly into the current RNN script, because the current model script already has a fixed fair-comparison setup for LSTM, GRU, and BiLSTM.
+
 ## Forecast Output
 
 ![Forecast Plot](assets/screenshots/forecast-plot.png)
@@ -103,6 +149,7 @@ outputs/
   forecast_plot.png
   data_quality_report.csv
   run_summary.json
+  spark_preprocessing_report.json   # created only when the optional Spark step is run
 ```
 
 The output files help show:
@@ -113,6 +160,7 @@ The output files help show:
 - high-error periods that need review
 - data quality and split information
 - best-model and next-best-model comparison
+- Spark preprocessing checks, if the optional preprocessing step is run
 
 This is also the part that makes the project more than a notebook-style experiment. The script creates reusable artifacts that can be inspected later or used in a report.
 
@@ -131,6 +179,7 @@ The script prints the model comparison tables in the terminal and saves the fina
 - MAE and RMSE are useful, but MAPE makes the error easier to understand in percentage terms.
 - A forecast is more useful when the error is monitored, not only when one final score is reported.
 - Saving outputs makes the experiment easier to review and reproduce.
+- PySpark is more useful as a preprocessing layer than as something forced into the model-training code.
 - A more complex model is not automatically better unless it beats simple baselines and gives useful error diagnostics.
 
 ## Current Limitations
@@ -139,6 +188,7 @@ The script prints the model comparison tables in the terminal and saves the fina
 - The project uses one-step-ahead forecasting.
 - It does not yet include external features such as holidays, events, or economic indicators.
 - The high-error review is based on forecast error thresholds, not a separate anomaly detection model.
+- The Spark preprocessing step is included as an optional practice workflow; the main dataset is still small.
 - The current run uses one public benchmark dataset, so it is best treated as a reusable workflow pattern rather than a final business model.
 
 ## Future Improvements
@@ -149,7 +199,8 @@ The script prints the model comparison tables in the terminal and saves the fina
 - Compare with statistical models such as ARIMA or Exponential Smoothing.
 - Add a separate anomaly detection method for forecast residuals.
 - Add a lightweight experiment log so model settings and results can be compared across runs.
+- Extend the Spark preprocessing step for grouped time series, such as multiple machines, product families, or locations.
 
 ## Resume Summary
 
-Built a time-series forecasting and error-monitoring pipeline using Python and PyTorch, comparing baseline forecasting methods with LSTM, GRU, and Bidirectional LSTM models. Evaluated direct forecasting vs differencing using MAE, RMSE, and MAPE, and generated saved reports for forecast comparison, model metrics, and high-error review.
+Built a time-series forecasting and error-monitoring pipeline using Python and PyTorch, comparing baseline forecasting methods with LSTM, GRU, and Bidirectional LSTM models. Added an optional PySpark preprocessing step for schema checks, lag/rolling feature creation, chronological split labeling, and reusable data-quality reporting.
