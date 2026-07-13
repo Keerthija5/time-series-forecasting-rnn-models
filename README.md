@@ -201,6 +201,3 @@ The script prints the model comparison tables in the terminal and saves the fina
 - Add a lightweight experiment log so model settings and results can be compared across runs.
 - Extend the Spark preprocessing step for grouped time series, such as multiple machines, product families, or locations.
 
-## Resume Summary
-
-Built a time-series forecasting and error-monitoring pipeline using Python and PyTorch, comparing baseline forecasting methods with LSTM, GRU, and Bidirectional LSTM models. Added an optional PySpark preprocessing step for schema checks, lag/rolling feature creation, chronological split labeling, and reusable data-quality reporting.
