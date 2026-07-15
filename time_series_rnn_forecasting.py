@@ -21,7 +21,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 # ============================
-# FINAL SETTINGS 
+# Settings
 # ============================
 CSV_FILENAME = "airline-passengers.csv"
 OUTPUT_DIR = "outputs"
@@ -44,7 +44,7 @@ SEED = 42
 
 
 # ============================
-# Reproducibility 
+# Reproducibility
 # ============================
 def set_seeds(seed: int):
     random.seed(seed)
@@ -54,7 +54,7 @@ def set_seeds(seed: int):
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
 
-    # Best-effort deterministic behavior 
+    # Best-effort deterministic behavior
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -75,7 +75,7 @@ def load_airpassengers_csv(path=CSV_FILENAME):
 
 
 # ============================
-# 2) Scaling 
+# 2) Scaling
 # ============================
 class StandardScaler:
     def __init__(self):
@@ -502,7 +502,7 @@ def save_project_outputs(months, series_raw, result_records):
     y_pred = best["y_pred"]
     abs_error = np.abs(y_true - y_pred)
     threshold = float(np.mean(abs_error) + ANOMALY_STD_MULTIPLIER * np.std(abs_error))
-    anomaly_flags = abs_error >= threshold
+    high_error_flags = abs_error >= threshold
 
     forecast_rows = []
     for idx, month in enumerate(test_months):
@@ -521,30 +521,30 @@ def save_project_outputs(months, series_raw, result_records):
         writer.writeheader()
         writer.writerows(forecast_rows)
 
-    anomaly_rows = []
+    high_error_rows = []
     for idx, month in enumerate(test_months):
-        anomaly_rows.append({
+        high_error_rows.append({
             "month": month,
             "actual": round(float(y_true[idx]), 3),
             "forecast": round(float(y_pred[idx]), 3),
             "absolute_error": round(float(abs_error[idx]), 3),
             "error_threshold": round(threshold, 3),
-            "high_error_flag": bool(anomaly_flags[idx]),
+            "high_error_flag": bool(high_error_flags[idx]),
         })
 
-    anomaly_path = os.path.join(OUTPUT_DIR, "anomaly_review.csv")
-    with open(anomaly_path, "w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=list(anomaly_rows[0].keys()))
+    high_error_path = os.path.join(OUTPUT_DIR, "high_error_review.csv")
+    with open(high_error_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=list(high_error_rows[0].keys()))
         writer.writeheader()
-        writer.writerows(anomaly_rows)
+        writer.writerows(high_error_rows)
 
     plot_path = os.path.join(OUTPUT_DIR, "forecast_plot.png")
     fig, ax = plt.subplots(figsize=(11, 4.5))
     ax.plot(test_months, y_true, marker="o", label="Actual")
     ax.plot(test_months, y_pred, marker="o", label=f"Forecast: {best['model']} ({best['condition']})")
 
-    flagged_months = [month for month, flag in zip(test_months, anomaly_flags) if flag]
-    flagged_values = [value for value, flag in zip(y_true, anomaly_flags) if flag]
+    flagged_months = [month for month, flag in zip(test_months, high_error_flags) if flag]
+    flagged_values = [value for value, flag in zip(y_true, high_error_flags) if flag]
     if flagged_months:
         ax.scatter(flagged_months, flagged_values, color="red", label="High forecast error", zorder=5)
 
@@ -587,7 +587,7 @@ def save_project_outputs(months, series_raw, result_records):
         "next_best_rmse": next_best["test_rmse"],
         "rmse_improvement_vs_next_best": round(float(rmse_improvement), 3),
         "rmse_improvement_percent_vs_next_best": round(float(rmse_improvement_percent), 2),
-        "high_error_periods_flagged": int(np.sum(anomaly_flags)),
+        "high_error_periods_flagged": int(np.sum(high_error_flags)),
         "review_threshold": round(threshold, 3),
         "seed": SEED,
         "device_note": "Uses CUDA if available, otherwise CPU",
@@ -600,11 +600,11 @@ def save_project_outputs(months, series_raw, result_records):
         "best_model": best["model"],
         "best_condition": best["condition"],
         "best_rmse": best["test_rmse"],
-        "anomaly_count": int(np.sum(anomaly_flags)),
+        "high_error_count": int(np.sum(high_error_flags)),
         "files": [
             metrics_path,
             forecast_path,
-            anomaly_path,
+            high_error_path,
             plot_path,
             data_quality_path,
             run_summary_path,
@@ -653,10 +653,10 @@ def main():
             f"\nBest result: {summary['best_model']} ({summary['best_condition']}) "
             f"with RMSE={summary['best_rmse']:.3f}"
         )
-        print(f"High-error periods flagged: {summary['anomaly_count']}")
+        print(f"High-error periods flagged: {summary['high_error_count']}")
         print(
             "\nInterpretation: the same workflow can be reused for passenger demand, "
-            "production demand, sensor trends, or quality-issue counts."
+            "inventory demand, sensor trends, or quality-issue counts."
         )
 
     # Plots: 3 figures total (one per model), each with 2 panels side-by-side

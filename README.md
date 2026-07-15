@@ -1,10 +1,10 @@
-# Time Series Forecasting & Error Monitoring Pipeline
+# Time Series Forecasting with Error Review
 
 I first built this project as a time-series forecasting experiment for comparing recurrent neural network models. The original idea was to use past observations to predict the next value in the series and understand how LSTM, GRU, and Bidirectional LSTM behave on sequential data.
 
-After that, I extended it into a more practical forecasting pipeline. I added baseline models, error metrics, saved output reports, and a high-error review file so the project is not only about training models, but also about checking whether the forecast is useful for monitoring or planning.
+After that, I extended it into a more practical forecasting workflow. I added baseline models, error metrics, saved output reports, and a high-error review file so the project is not only about training models, but also about checking whether the forecast is useful for monitoring or planning.
 
-The dataset used here is the Airline Passengers dataset. Even though it is a public benchmark dataset, I treated it like a monthly demand signal. The same workflow could be reused for production demand, sensor trends, quality issue counts, or other industrial time-series data.
+The dataset used here is the Airline Passengers dataset. Even though it is a small public example dataset, I treated it like a monthly demand signal. The same workflow could be reused for passenger demand, inventory demand, sensor trends, quality issue counts, or other monthly time-series data.
 
 I also added an optional PySpark preprocessing step. The dataset itself is small, so Spark is not technically needed for this file. I added it because I wanted to practise the kind of raw-to-clean data preparation that would be needed if the same forecasting workflow was used on larger demand, machine, or sensor datasets.
 
@@ -131,7 +131,7 @@ The generated feature file includes previous-month lags, seasonal lag, rolling m
 
 ## High-Error Review
 
-![Anomaly Review](assets/screenshots/anomaly-review.png)
+![High-Error Review](assets/screenshots/high-error-review.png)
 
 ## Terminal Run
 
@@ -145,7 +145,7 @@ Each run saves the same output files into the `outputs/` folder, so the project 
 outputs/
   metrics_summary.csv
   forecast_comparison.csv
-  anomaly_review.csv
+  high_error_review.csv
   forecast_plot.png
   data_quality_report.csv
   run_summary.json
@@ -162,7 +162,7 @@ The output files help show:
 - best-model and next-best-model comparison
 - Spark preprocessing checks, if the optional preprocessing step is run
 
-This is also the part that makes the project more than a notebook-style experiment. The script creates reusable artifacts that can be inspected later or used in a report.
+This is also the part that makes the project more than a notebook-style experiment. The script creates reusable files that can be inspected later or used in a report.
 
 ## How To Run
 
@@ -189,15 +189,14 @@ The script prints the model comparison tables in the terminal and saves the fina
 - It does not yet include external features such as holidays, events, or economic indicators.
 - The high-error review is based on forecast error thresholds, not a separate anomaly detection model.
 - The Spark preprocessing step is included as an optional practice workflow; the main dataset is still small.
-- The current run uses one public benchmark dataset, so it is best treated as a reusable workflow pattern rather than a final business model.
+- The current run uses one small public dataset, so it is best treated as a reusable workflow pattern rather than a final business model.
 
 ## Future Improvements
 
-- Test the same pipeline on industrial sensor or demand data.
+- Test the same workflow on industrial sensor or demand data.
 - Add multi-step forecasting.
 - Add external features for better demand prediction.
 - Compare with statistical models such as ARIMA or Exponential Smoothing.
 - Add a separate anomaly detection method for forecast residuals.
 - Add a lightweight experiment log so model settings and results can be compared across runs.
 - Extend the Spark preprocessing step for grouped time series, such as multiple machines, product families, or locations.
-
