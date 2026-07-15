@@ -182,21 +182,16 @@ The script prints the model comparison tables in the terminal and saves the fina
 - PySpark is more useful as a preprocessing layer than as something forced into the model-training code.
 - A more complex model is not automatically better unless it beats simple baselines and gives useful error diagnostics.
 
-## Current Limitations
+## Project Status and Next Steps
 
-- The dataset is small, with 144 monthly observations.
-- The project uses one-step-ahead forecasting.
-- It does not yet include external features such as holidays, events, or economic indicators.
-- The high-error review is based on forecast error thresholds, not a separate anomaly detection model.
-- The Spark preprocessing step is included as an optional practice workflow; the main dataset is still small.
-- The current run uses one small public dataset, so it is best treated as a reusable workflow pattern rather than a final business model.
+This is a compact forecasting workflow on a public monthly dataset. I kept the dataset small so the baselines, RNN comparison, differencing effect, data-quality checks, optional Spark preprocessing, and high-error review can be inspected clearly.
 
-## Future Improvements
+Next things I would like to try:
 
 - Test the same workflow on industrial sensor or demand data.
 - Add multi-step forecasting.
-- Add external features for better demand prediction.
+- Add external features such as holidays, events, or economic indicators.
 - Compare with statistical models such as ARIMA or Exponential Smoothing.
-- Add a separate anomaly detection method for forecast residuals.
+- Add a separate residual-based anomaly detection method.
 - Add a lightweight experiment log so model settings and results can be compared across runs.
 - Extend the Spark preprocessing step for grouped time series, such as multiple machines, product families, or locations.
