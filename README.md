@@ -67,6 +67,10 @@ The experiment also showed that differencing improved the RNN models clearly. Wi
 
 In this final run, the high-error review flagged 2 months where the forecast error crossed the review threshold. I added this because in practical forecasting, the question is not only "which model is best?", but also "where should a person look more carefully?"
 
+## Checked in This Version
+
+The current run uses 144 monthly observations from 1949-01 to 1960-12. I compared 10 forecasting setups in total: 4 simple baselines, 3 RNN models without differencing, and 3 RNN models with differencing. The best result in this run was BiLSTM with differencing, with MAE 28.339, RMSE 34.931, and MAPE 6.12%.
+
 ## Data and Split Check
 
 The script also saves a small data-quality report before interpreting the model outputs. In the current dataset:
